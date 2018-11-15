@@ -1,0 +1,195 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><title>Mosquitto Websockets</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="mqttws31.js" type="text/javascript"></script>
+<script src="jquery.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+var mqtt;
+var reconnectTimeout = 2000; 
+var dps =[];
+function MQTTconnect() {
+	mqtt = new Paho.MQTT.Client("broker.hivemq.com", 8000,"/mqtt","web_" + parseInt(Math.random() * 100, 10) );
+	var options = {
+		timeout: 3,
+		useSSL: false,
+		cleanSession: true,
+		onSuccess: onConnect,
+		onFailure: function (message) {
+			$('#status').val("Connection failed: " + message.errorMessage + "Retrying");
+			setTimeout(MQTTconnect, reconnectTimeout);
+		}
+	};
+	mqtt.onConnectionLost = onConnectionLost;
+	mqtt.onMessageArrived = onMessageArrived;
+	mqtt.connect(options);
+}
+function onConnect() {
+	$('#status').val('Connected to host ');
+	// Connection succeeded; subscribe to our topic
+	mqtt.subscribe("cheucle/Temp", {qos: 0});
+	mqtt.subscribe("cheucle/Aff", {qos: 0});
+	$('#topic').val("Topic")
+}
+function onConnectionLost(response) {
+	setTimeout(MQTTconnect, reconnectTimeout);
+	$('#status').val("connection lost: " + responseObject.errorMessage + ". Reconnecting");
+};
+function onMessageArrived(message) {
+	var topic = message.destinationName;
+	var payload = message.payloadString;
+
+	if (topic=="cheucle/Aff"){
+		console.log("Aff");
+		dayDisplay(JSON.parse(payload));
+		//$('#ws').prepend('<li>' + topic + ' = ' + payload + '</li>');
+	}
+
+	if (topic=="cheucle/Temp"){
+		console.log("Temp");
+		//$('#ws').prepend('<li>' + topic + ' = ' + payload + '</li>');
+		instantDisplay(payload);
+	}
+	
+	
+//setInterval(function(){updateChart()}, updateInterval);
+
+
+
+};
+
+var dateArray;
+var timeArray;
+var timeValue;
+var dayHistory;
+
+function dayDisplay(data) {
+
+
+	var dps2 = [];
+
+	data.forEach(function(dayHistory) {
+		dateArray = dayHistory.date.split('/');
+		timeArray = dayHistory.time.split(':');
+		timeValue = 3600*parseInt(timeArray[0]) + 60*parseInt(timeArray[1]) + parseInt(timeArray[2]);
+
+	 	let date = new Date(dateArray[2], dateArray[1], dateArray[0], timeArray[0], timeArray[1], timeArray[2]);
+
+		dps2.push({
+		//x: timeValue,
+			x: date,
+			y: parseFloat(dayHistory.temp)
+		});
+
+		
+		
+	});
+
+	console.log(dps2);
+
+	var chart2 = new CanvasJS.Chart("chartContainer2", {
+		title :{
+			text: "Dynamic Data 2"
+		},
+		axisY: {
+			includeZero: false,
+			maximum : 25,
+			minimum : 21
+		}, 
+		axisX: {
+			 valueFormatString: "HH:mm:ss" ,
+			labelAngle: -45
+		},     
+		data: [{
+			type: "line",
+			dataPoints: dps2
+		}]
+	});
+	chart2.render();
+	
+}; 
+
+function instantDisplay(payload) {
+	var chart1 = new CanvasJS.Chart("chartContainer1", {
+		title :{
+			text: "Dynamic Data 1"
+		},
+		axisY: {
+			includeZero: false,
+			maximum : 25,
+			minimum : 21
+		}, 
+		axisX: {
+			 valueFormatString: "HH:mm:ss" ,
+			labelAngle: -45
+		},     
+		data: [{
+			type: "line",
+			dataPoints: dps
+		}]
+	});
+
+	
+
+	
+	let updateInterval = 1000;
+	let dataLength = 20; // number of dataPoints visible at any point
+
+	var updateChart1 = function (count) {
+
+			var now = new Date();
+			yVal = parseFloat(payload);
+			xVal= now ;
+			dps.push({
+				x: xVal,
+				y: yVal
+			});
+			
+		
+
+		if (dps.length > dataLength) {
+			dps.shift();
+		}
+
+		chart1.render();
+	};
+
+
+
+updateChart1(dataLength);
+};
+
+
+
+$(function(){
+    $("#led_on").click(function(){
+	message = new Paho.MQTT.Message("ON");
+	message.destinationName = "cheucle/led";
+        mqtt.send(message);
+    });
+$("#led_off").click(function(){
+	message = new Paho.MQTT.Message("OFF");
+	message.destinationName = "cheucle/led";
+        mqtt.send(message);
+    });
+});
+
+$(document).ready(function() {
+	MQTTconnect();
+});
+</script>
+<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+</head>
+<body style="direction: ltr;">
+<h1>Mosquitto Websockets</h1>
+<div>
+<div>Subscribed to <input id="topic" disabled="disabled" type="text" /> Status: <input id="status" size="80" disabled="enable" type="text" /></div>
+<div><input id="led_on" type="button" value="ON"/> <input id="led_off" type="button"  value="OFF"/></div>
+<div style="display:flex; flex-direction:row;" >
+<ul id="ws" style="font-family: 'Courier New',Courier,monospace;">
+</ul>
+<div id="chartContainer1" style="height: 370px; width:100%;"></div>
+<div id="chartContainer2" style="height: 370px; width:100%;"></div>
+</div>
+</div>
+</body></html>
