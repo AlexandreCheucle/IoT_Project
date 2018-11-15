@@ -29,6 +29,7 @@ function onConnect() {
 	// Connection succeeded; subscribe to our topic
 	mqtt.subscribe("cheucle/Temp", {qos: 0});
 	mqtt.subscribe("cheucle/Aff", {qos: 0});
+	mqtt.subscribe("cheucle/Date", {qos: 0});
 	$('#topic').val("Topic")
 }
 function onConnectionLost(response) {
@@ -163,16 +164,32 @@ updateChart1(dataLength);
 
 $(function(){
     $("#led_on").click(function(){
-	message = new Paho.MQTT.Message("ON");
-	message.destinationName = "cheucle/led";
+		message = new Paho.MQTT.Message("ON");
+		message.destinationName = "cheucle/led";
         mqtt.send(message);
     });
-$("#led_off").click(function(){
-	message = new Paho.MQTT.Message("OFF");
-	message.destinationName = "cheucle/led";
+	$("#led_off").click(function(){
+		message = new Paho.MQTT.Message("OFF");
+		message.destinationName = "cheucle/led";
         mqtt.send(message);
-    });
+	});
+
 });
+
+function convertDate(inputFormat) { //find on https://stackoverflow.com/questions/13459866/javascript-change-date-into-format-of-dd-mm-yyyy
+  function pad(s) { return (s < 10) ? '0' + s : s; }
+  var d = new Date(inputFormat);
+  return [pad(d.getDate()), pad(d.getMonth()+1), d.getFullYear()].join('/');
+}
+
+function chooseDate() {
+	let dateToDisplay = convertDate(document.getElementById("dateToDisplay").value);
+	console.log(dateToDisplay);
+	message = new Paho.MQTT.Message(dateToDisplay.toString());
+		message.destinationName = "cheucle/Date";
+        mqtt.send(message);
+
+};
 
 $(document).ready(function() {
 	MQTTconnect();
@@ -185,6 +202,7 @@ $(document).ready(function() {
 <div>
 <div>Subscribed to <input id="topic" disabled="disabled" type="text" /> Status: <input id="status" size="80" disabled="enable" type="text" /></div>
 <div><input id="led_on" type="button" value="ON"/> <input id="led_off" type="button"  value="OFF"/></div>
+<div> <input id="dateToDisplay" type="date" name="dateToDisplay">  <button onclick="chooseDate()">Click me</button> </div>
 <div style="display:flex; flex-direction:row;" >
 <ul id="ws" style="font-family: 'Courier New',Courier,monospace;">
 </ul>
