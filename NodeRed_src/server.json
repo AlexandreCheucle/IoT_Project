@@ -1,0 +1,1 @@
+[{"id":"9ecfb390.8b409","type":"mongodb out","z":"6719c52.64008bc","mongodb":"420f0db.d67ab74","name":"Hum","collection":"Hum","payonly":true,"upsert":false,"multi":false,"operation":"store","x":730,"y":100,"wires":[]},{"id":"420f0db.d67ab74","type":"mongodb","z":"","hostname":"127.0.0.1","port":"27017","db":"Capteurs","name":"Capteurs"}]
