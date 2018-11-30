@@ -68,6 +68,7 @@ function dayDisplay(data) {
 
 
 	var dps2 = [];
+	var dps3 = [];
 
 	data.forEach(function(dayHistory) {
 		dateArray = dayHistory.date.split('/');
@@ -82,6 +83,12 @@ function dayDisplay(data) {
 			y: parseFloat(dayHistory.temp)
 		});
 
+		dps3.push({
+		//x: timeValue,
+			x: date,
+			y: parseFloat(dayHistory.hum)
+		});
+
 		
 		
 	});
@@ -92,10 +99,15 @@ function dayDisplay(data) {
 		title :{
 			text: "Dynamic Data 2"
 		},
-		axisY: {
+		axisY1: {
 			includeZero: false,
 			maximum : 25,
 			minimum : 21
+		}, 
+		axisY2: {
+			includeZero: false,
+			maximum : 100,
+			minimum : 10
 		}, 
 		axisX: {
 			 valueFormatString: "HH:mm:ss" ,
@@ -104,11 +116,17 @@ function dayDisplay(data) {
 		data: [{
 			type: "line",
 			dataPoints: dps2
+		},
+			{
+			type: "line",
+			axisYType: "secondary",
+			dataPoints: dps3
 		}]
 	});
 	chart2.render();
 	
 }; 
+
 
 function instantDisplay(payload) {
 	var chart1 = new CanvasJS.Chart("chartContainer1", {
@@ -184,7 +202,6 @@ function convertDate(inputFormat) { //find on https://stackoverflow.com/question
 
 function chooseDate() {
 	let dateToDisplay = convertDate(document.getElementById("dateToDisplay").value);
-	console.log(dateToDisplay);
 	message = new Paho.MQTT.Message(dateToDisplay.toString());
 		message.destinationName = "cheucle/Date";
         mqtt.send(message);
