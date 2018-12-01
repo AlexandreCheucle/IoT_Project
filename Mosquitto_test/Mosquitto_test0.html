@@ -8,6 +8,9 @@
 var mqtt;
 var reconnectTimeout = 2000; 
 var dps =[];
+var cpt =0;
+var dps2 = [];
+var dps3 = [];
 function MQTTconnect() {
 	mqtt = new Paho.MQTT.Client("broker.hivemq.com", 8000,"/mqtt","web_" + parseInt(Math.random() * 100, 10) );
 	var options = {
@@ -39,11 +42,14 @@ function onConnectionLost(response) {
 function onMessageArrived(message) {
 	var topic = message.destinationName;
 	var payload = message.payloadString;
+	
 
 	if (topic=="cheucle/Aff"){
 		console.log("Aff");
 		dayDisplay(JSON.parse(payload));
 		//$('#ws').prepend('<li>' + topic + ' = ' + payload + '</li>');
+
+		
 	}
 
 	if (topic=="cheucle/Temp"){
@@ -67,8 +73,7 @@ var dayHistory;
 function dayDisplay(data) {
 
 
-	var dps2 = [];
-	var dps3 = [];
+	
 
 	data.forEach(function(dayHistory) {
 		dateArray = dayHistory.date.split('/');
@@ -77,53 +82,65 @@ function dayDisplay(data) {
 
 	 	let date = new Date(dateArray[2], dateArray[1], dateArray[0], timeArray[0], timeArray[1], timeArray[2]);
 
-		dps2.push({
-		//x: timeValue,
-			x: date,
-			y: parseFloat(dayHistory.temp)
-		});
-
-		dps3.push({
-		//x: timeValue,
-			x: date,
-			y: parseFloat(dayHistory.hum)
-		});
-
+	 	if (dayHistory.temp != null) {
+			dps2.push({
+			//x: timeValue,
+				x: date,
+				y: parseFloat(dayHistory.temp)
+			});
+		}
+		if (dayHistory.hum != null) {
+			dps3.push({
+			//x: timeValue,
+				x: date,
+				y: parseFloat(dayHistory.hum)
+			});
+		}
 		
 		
 	});
 
 	console.log(dps2);
+	console.log(dps3);
 
-	var chart2 = new CanvasJS.Chart("chartContainer2", {
-		title :{
-			text: "Dynamic Data 2"
-		},
-		axisY1: {
-			includeZero: false,
-			maximum : 25,
-			minimum : 21
-		}, 
-		axisY2: {
-			includeZero: false,
-			maximum : 100,
-			minimum : 10
-		}, 
-		axisX: {
-			 valueFormatString: "HH:mm:ss" ,
-			labelAngle: -45
-		},     
-		data: [{
-			type: "line",
-			dataPoints: dps2
-		},
-			{
-			type: "line",
-			axisYType: "secondary",
-			dataPoints: dps3
-		}]
-	});
-	chart2.render();
+	if (cpt == 1) {
+		cpt = 0;
+		var chart2 = new CanvasJS.Chart("chartContainer2", {
+			title :{
+				text: "Dynamic Data 2"
+			},
+			axisY1: {
+				includeZero: false,
+				maximum : 25,
+				minimum : 21
+			}, 
+			axisY2: {
+				includeZero: false,
+				maximum : 100,
+				minimum : 10
+			}, 
+			axisX: {
+				 valueFormatString: "HH:mm:ss" ,
+				labelAngle: -45
+			},     
+			data: [{
+				type: "line",
+				dataPoints: dps2
+			},
+				{
+				type: "line",
+				axisYType: "secondary",
+				dataPoints: dps3
+			}]
+		});
+		chart2.render();
+		dps2 = [];
+		dps3 = [];
+	}
+
+	else {
+		cpt ++;
+	}
 	
 }; 
 
