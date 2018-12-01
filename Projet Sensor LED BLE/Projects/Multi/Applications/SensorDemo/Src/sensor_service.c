@@ -66,9 +66,10 @@ uint16_t accServHandle, accCharHandle;
 uint16_t envSensServHandle, tempCharHandle, pressCharHandle, humidityCharHandle;
 
 void *TEMPERATURE_handle = NULL;
-
+void *HUMIDITY_handle = NULL;
 
 static void Temperature_Sensor_Handler(int16_t *pTemperature);
+static void Humidity_Sensor_Handler(int16_t *pHumidity);
 
 
 uint16_t ledServHandle, ledCharHandle;
@@ -95,6 +96,7 @@ do {\
 // Environment sensors UUID's
 #define COPY_ENV_SENS_SERVICE_UUID(uuid_struct)  COPY_UUID_128(uuid_struct,0x04,0x36,0x6e,0x80, 0xcf,0x3a, 0x11,0xe1, 0x9a,0xb4, 0x00,0x02,0xa5,0xd5,0xc5,0x1b)
 #define COPY_TEMP_CHAR_UUID(uuid_struct)         COPY_UUID_128(uuid_struct,0x05,0x36,0x6e,0x80, 0xcf,0x3a, 0x11,0xe1, 0x9a,0xb4, 0x00,0x02,0xa5,0xd5,0xc5,0x1b)
+#define COPY_HUM_CHAR_UUID(uuid_struct)         COPY_UUID_128(uuid_struct,0x07,0x36,0x6e,0x80, 0xcf,0x3a, 0x11,0xe1, 0x9a,0xb4, 0x00,0x02,0xa5,0xd5,0xc5,0x1b)
 
 // LED UUID's
 #define COPY_LED_SERVICE_UUID(uuid_struct)  COPY_UUID_128(uuid_struct,0x0b,0x36,0x6e,0x80, 0xcf,0x3a, 0x11,0xe1, 0x9a,0xb4, 0x00,0x02,0xa5,0xd5,0xc5,0x1b)
@@ -119,6 +121,7 @@ do {\
   {
     /* Force to use HTS221 */
     BSP_TEMPERATURE_Init( HTS221_T_0, &TEMPERATURE_handle );
+		BSP_HUMIDITY_Init( HTS221_H_0, &HUMIDITY_handle );
 
   }
 
@@ -130,6 +133,7 @@ do {\
   void enableAllSensors(void)
   {
     BSP_TEMPERATURE_Sensor_Enable( TEMPERATURE_handle );
+		BSP_HUMIDITY_Sensor_Enable( HUMIDITY_handle );
 		
   }
 
@@ -175,6 +179,25 @@ tBleStatus Add_Environmental_Sensor_Service(void)
   ret = aci_gatt_add_char_desc(envSensServHandle, tempCharHandle, UUID_TYPE_16, (uint8_t *)&uuid16, 7, 7, 
 	            (void *)&charFormat, ATTR_PERMISSION_NONE, ATTR_ACCESS_READ_ONLY, 0, 16, FALSE, &descHandle);
   if (ret != BLE_STATUS_SUCCESS) goto fail;
+	
+	/* Humidity Characteristic */
+  COPY_HUM_CHAR_UUID(uuid);  
+  ret =  aci_gatt_add_char(envSensServHandle, UUID_TYPE_128, uuid, 2, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
+                           GATT_NOTIFY_READ_REQ_AND_WAIT_FOR_APPL_RESP, 16, 0, &humidityCharHandle);
+  if (ret != BLE_STATUS_SUCCESS) goto fail;
+  
+  charFormat.format = FORMAT_SINT16;
+  charFormat.exp = -1;
+  charFormat.unit = UNIT_UNITLESS;
+  charFormat.name_space = 0;
+  charFormat.desc = 0;
+  
+  uuid16 = CHAR_FORMAT_DESC_UUID;
+  
+  ret = aci_gatt_add_char_desc(envSensServHandle, humidityCharHandle, UUID_TYPE_16, (uint8_t *)&uuid16, 7, 7, 
+	            (void *)&charFormat, ATTR_PERMISSION_NONE, ATTR_ACCESS_READ_ONLY, 0, 16, FALSE, &descHandle);
+  if (ret != BLE_STATUS_SUCCESS) goto fail;
+															 
 															 
   PRINTF("Service ENV_SENS added. Handle 0x%04X, TEMP Charac handle: 0x%04X, PRESS Charac handle: 0x%04X, HUMID Charac handle: 0x%04X\n",envSensServHandle, tempCharHandle, pressCharHandle, humidityCharHandle);	
   return BLE_STATUS_SUCCESS; 
@@ -242,6 +265,24 @@ tBleStatus Temp_Update(int16_t temp)
   tBleStatus ret;
   
   ret = aci_gatt_update_char_value(envSensServHandle, tempCharHandle, 0, 2, (uint8_t*)&temp);
+  
+  if (ret != BLE_STATUS_SUCCESS){
+    PRINTF("Error while updating TEMP characteristic.\n") ;
+    return BLE_STATUS_ERROR ;
+  }
+  return BLE_STATUS_SUCCESS;
+}
+
+/**
+ * @brief  Update humidity characteristic value.
+ * @param  Humidity in tenths of degree 
+ * @retval Status
+ */
+tBleStatus Hum_Update(int16_t humidity)
+{  
+  tBleStatus ret;
+  
+  ret = aci_gatt_update_char_value(envSensServHandle, humidityCharHandle, 0, 2, (uint8_t*)&humidity);
   
   if (ret != BLE_STATUS_SUCCESS){
     PRINTF("Error while updating TEMP characteristic.\n") ;
@@ -331,6 +372,12 @@ void Read_Request_CB(uint16_t handle)
     int16_t data = 0;
     Temperature_Sensor_Handler(&data);
     Temp_Update(data);
+  }
+	
+	else if(handle == humidityCharHandle + 1){
+    int16_t data = 0;
+    Humidity_Sensor_Handler(&data);
+    Hum_Update(data);
   }
  
 
@@ -453,6 +500,23 @@ static void Temperature_Sensor_Handler(int16_t *pTemperature)
     *pTemperature = (int16_t)((fValue * 10) + 0.5);
   }
 }
+
+/**
+ * @brief  Handles the HUMIDITY sensor data getting/sending
+ * @param  Msg the HUMIDITY part of the stream
+ * @retval None Humidity
+ */
+static void Humidity_Sensor_Handler(int16_t *pHumidity)
+{
+  uint8_t status = 0;
+  float fValue;
+
+  if(BSP_HUMIDITY_IsInitialized(HUMIDITY_handle, &status) == COMPONENT_OK && status == 1)
+  {
+    BSP_HUMIDITY_Get_Hum(HUMIDITY_handle, &fValue);
+    *pHumidity = (int16_t)((fValue * 10) + 0.5);
+  }
+} 
 
 
 

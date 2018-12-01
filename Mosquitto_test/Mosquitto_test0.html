@@ -8,9 +8,9 @@
 var mqtt;
 var reconnectTimeout = 2000; 
 var dps =[];
-var cpt =0;
-var dps2 = [];
-var dps3 = [];
+var cpt_day_full =0;
+var dps_temp_fullday = [];
+var dps_hum_fullday = [];
 function MQTTconnect() {
 	mqtt = new Paho.MQTT.Client("broker.hivemq.com", 8000,"/mqtt","web_" + parseInt(Math.random() * 100, 10) );
 	var options = {
@@ -83,14 +83,14 @@ function dayDisplay(data) {
 	 	let date = new Date(dateArray[2], dateArray[1], dateArray[0], timeArray[0], timeArray[1], timeArray[2]);
 
 	 	if (dayHistory.temp != null) {
-			dps2.push({
+			dps_temp_fullday.push({
 			//x: timeValue,
 				x: date,
 				y: parseFloat(dayHistory.temp)
 			});
 		}
 		if (dayHistory.hum != null) {
-			dps3.push({
+			dps_hum_fullday.push({
 			//x: timeValue,
 				x: date,
 				y: parseFloat(dayHistory.hum)
@@ -100,11 +100,11 @@ function dayDisplay(data) {
 		
 	});
 
-	console.log(dps2);
-	console.log(dps3);
+	console.log(dps_temp_fullday);
+	console.log(dps_hum_fullday);
 
-	if (cpt == 1) {
-		cpt = 0;
+	if (cpt_day_full == 1) {
+		cpt_day_full = 0;
 		var chart2 = new CanvasJS.Chart("chartContainer2", {
 			title :{
 				text: "Dynamic Data 2"
@@ -125,21 +125,21 @@ function dayDisplay(data) {
 			},     
 			data: [{
 				type: "line",
-				dataPoints: dps2
+				dataPoints: dps_temp_fullday
 			},
 				{
 				type: "line",
 				axisYType: "secondary",
-				dataPoints: dps3
+				dataPoints: dps_hum_fullday
 			}]
 		});
 		chart2.render();
-		dps2 = [];
-		dps3 = [];
+		dps_temp_fullday = [];
+		dps_hum_fullday = [];
 	}
 
 	else {
-		cpt ++;
+		cpt_day_full ++;
 	}
 	
 }; 
