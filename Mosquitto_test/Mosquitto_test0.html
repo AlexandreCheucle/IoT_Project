@@ -8,6 +8,7 @@
 var mqtt;
 var reconnectTimeout = 2000; 
 var dps =[];
+var dps_hum_inst=[];
 var cpt_day_full =0;
 var dps_temp_fullday = [];
 var dps_hum_fullday = [];
@@ -31,6 +32,7 @@ function onConnect() {
 	$('#status').val('Connected to host ');
 	// Connection succeeded; subscribe to our topic
 	mqtt.subscribe("cheucle/Temp", {qos: 0});
+	mqtt.subscribe("cheucle/Hum", {qos: 0});
 	mqtt.subscribe("cheucle/Aff", {qos: 0});
 	mqtt.subscribe("cheucle/Date", {qos: 0});
 	$('#topic').val("Topic")
@@ -55,7 +57,12 @@ function onMessageArrived(message) {
 	if (topic=="cheucle/Temp"){
 		console.log("Temp");
 		//$('#ws').prepend('<li>' + topic + ' = ' + payload + '</li>');
-		instantDisplay(payload);
+		instantTempDisplay(payload);
+	}
+	if (topic=="cheucle/Hum"){
+		console.log("Hum");
+		//$('#ws').prepend('<li>' + topic + ' = ' + payload + '</li>');
+		instantHumDisplay(payload);
 	}
 	
 	
@@ -105,7 +112,7 @@ function dayDisplay(data) {
 
 	if (cpt_day_full == 1) {
 		cpt_day_full = 0;
-		var chart2 = new CanvasJS.Chart("chartContainer2", {
+		var chart2 = new CanvasJS.Chart("chartContainer_Fullday_display", {
 			title :{
 				text: "Dynamic Data 2"
 			},
@@ -145,15 +152,15 @@ function dayDisplay(data) {
 }; 
 
 
-function instantDisplay(payload) {
-	var chart1 = new CanvasJS.Chart("chartContainer1", {
+function instantTempDisplay(payload) {
+	var chart1 = new CanvasJS.Chart("chartContainer_Inst_temp", {
 		title :{
 			text: "Dynamic Data 1"
 		},
 		axisY: {
 			includeZero: false,
 			maximum : 25,
-			minimum : 21
+			minimum : 15
 		}, 
 		axisX: {
 			 valueFormatString: "HH:mm:ss" ,
@@ -195,7 +202,55 @@ function instantDisplay(payload) {
 updateChart1(dataLength);
 };
 
+function instantHumDisplay(payload) {
+	let chart1 = new CanvasJS.Chart("chartContainer_Inst_hum", {
+		title :{
+			text: "Instant Hum Display"
+		},
+		axisY: {
+			includeZero: false,
+			maximum : 100,
+			minimum : 15
+		}, 
+		axisX: {
+			 valueFormatString: "HH:mm:ss" ,
+			labelAngle: -45
+		},     
+		data: [{
+			type: "line",
+			dataPoints: dps_hum_inst
+		}]
+	});
 
+	
+
+	
+	let updateInterval = 1000;
+	let dataLength = 20; // number of dataPoints visible at any point
+
+	var updateHumInst = function (count) {
+
+			let now = new Date();
+			yVal = parseFloat(payload);
+			xVal= now ;
+			dps_hum_inst.push({
+				x: xVal,
+				y: yVal
+			});
+			
+		
+
+		if (dps_hum_inst.length > dataLength) {
+			dps_hum_inst.shift();
+		}
+
+		chart1.render();
+	};
+
+
+
+updateHumInst(dataLength);
+};
 
 $(function(){
     $("#led_on").click(function(){
@@ -240,8 +295,11 @@ $(document).ready(function() {
 <div style="display:flex; flex-direction:row;" >
 <ul id="ws" style="font-family: 'Courier New',Courier,monospace;">
 </ul>
-<div id="chartContainer1" style="height: 370px; width:100%;"></div>
-<div id="chartContainer2" style="height: 370px; width:100%;"></div>
+
+<div id="chartContainer_Inst_temp" style="height: 370px; width:100%;"></div>
+<div id="chartContainer_Inst_hum" style="height: 370px; width:100%;"></div>
+
+<div id="chartContainer_Fullday_display" style="height: 370px; width:100%;"></div>
 </div>
 </div>
 </body></html>
