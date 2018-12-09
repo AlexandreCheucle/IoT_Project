@@ -1,7 +1,8 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><title>Mosquitto Websockets</title>
-
+<meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" type="text/css" href="style.css">
 <script src="mqttws31.js" type="text/javascript"></script>
 <script src="jquery.min.js" type="text/javascript"></script>
 <script type="text/javascript">
@@ -23,6 +24,8 @@ var resetPositionX = 0;
 var resetPositionY = 0;
 var resetPositionZ = 0;
 
+var armed = true;
+var sendmail = 1;
 
 function MQTTconnect() {
 	mqtt = new Paho.MQTT.Client("broker.hivemq.com", 8000,"/mqtt","web_" + parseInt(Math.random() * 100, 10) );
@@ -50,6 +53,8 @@ function onConnect() {
 	mqtt.subscribe("cheucle/PositionX", {qos: 0});
 	mqtt.subscribe("cheucle/PositionY", {qos: 0});
 	mqtt.subscribe("cheucle/PositionZ", {qos: 0});
+	mqtt.subscribe("cheucle/AlertePosition", {qos: 0});
+	mqtt.subscribe("cheucle/Sirene", {qos: 0});
 	$('#topic').val("Topic")
 }
 function onConnectionLost(response) {
@@ -81,15 +86,12 @@ function onMessageArrived(message) {
 	}
 
 	if (topic == "cheucle/PositionX"){
-		console.log("Position X acquired");
 		positionCheckX(payload);
 	}
 	if (topic == "cheucle/PositionY"){
-		console.log("Position Y acquired");
 		positionCheckY(payload);
 	}
 	if (topic == "cheucle/PositionZ"){
-		console.log("Position Z acquired");
 		positionCheckZ(payload);
 	}
 	
@@ -309,25 +311,25 @@ function chooseDate() {
 };
 
 function positionCheckX(payload) {
-	let dataX = payload;
-	console.log(dataX);
+	let dataX = parseInt(payload);
 	if (X == null || resetPositionX == 1) {
 		X = dataX;
 		resetPositionX = 0;
 
 	}
+
 	else {
 		if ((dataX < X - tolerance) || (dataX  > X + tolerance)) {
-
-			console.log("Alerte");
+			alertePosition();
 		}
 	}
-
+	console.log(dataX);
+	console.log(dataX - tolerance);
+	console.log(dataX + tolerance);
 };
 
 function positionCheckY(payload) {
-	let dataY = payload;
-	console.log(dataY);
+	let dataY = parseInt(payload);
 	if (Y == null || resetPositionY == 1) {
 		Y = dataY;
 		resetPositionY = 0;
@@ -336,15 +338,15 @@ function positionCheckY(payload) {
 	else {
 		if ((dataY < Y - tolerance) || (dataY  > Y + tolerance)) {
 
-			console.log("Alerte");
+			
+			alertePosition();
 		}
 	}
 
 };
 
 function positionCheckZ(payload) {
-	let dataZ = payload;
-	console.log(dataZ);
+	let dataZ = parseInt(payload);
 	if (Z == null || resetPositionZ == 1) {
 		Z = dataZ;
 		resetPositionZ = 0;
@@ -352,12 +354,46 @@ function positionCheckZ(payload) {
 	}
 	else {
 		if ((dataZ < Z - tolerance) || (dataZ  > Z + tolerance)) {
-
-			console.log("Alerte");
+			alertePosition();
 		}
 	}
 
 };
+
+function alertePosition(){
+		console.log("Alerte Position")
+		console.log(sendmail);
+		if (armed) {
+			if (sendmail) {
+				message = new Paho.MQTT.Message("ON");
+				message.destinationName = "cheucle/AlertePosition";
+	        	mqtt.send(message);
+	        	sendmail = 0;
+			}
+			message = new Paho.MQTT.Message("ON");
+			message.destinationName = "cheucle/Sirene";
+	        mqtt.send(message);
+			
+	    }
+}; 
+
+function armementAlerte() {
+		armed = !armed;
+		console.log(armed);
+		if (armed) {
+			sendmail = 1;
+			resetPositionX = 1;
+			resetPositionY = 1;
+			resetPositionY = 1;
+		}
+		else {
+			message = new Paho.MQTT.Message("OFF");
+			message.destinationName = "cheucle/Sirene";
+	        mqtt.send(message);
+	    }
+};
+
+
 
 $(document).ready(function() {
 	MQTTconnect();
@@ -365,12 +401,20 @@ $(document).ready(function() {
 </script>
 <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
 </head>
+
 <body style="direction: ltr;">
 <h1>Mosquitto Websockets</h1>
 <div>
 <div>Subscribed to <input id="topic" disabled="disabled" type="text" /> Status: <input id="status" size="80" disabled="enable" type="text" /></div>
 <div><input id="led_on" type="button" value="ON"/> <input id="led_off" type="button"  value="OFF"/></div>
-<div> <input id="dateToDisplay" type="date" name="dateToDisplay">  <button onclick="chooseDate()">Click me</button> </div>
+<div> 
+	<input id="dateToDisplay" type="date" name="dateToDisplay">  <button onclick="chooseDate()">Click me</button>
+ </div>
+ <div>
+ 	<input type='checkbox' class='ios8-switch ios8-switch-lg' id='checkbox-3' checked="yes" onclick="armementAlerte()">
+	<label for='checkbox-3'>Alarme armée</label>
+	<br>			
+</div>
 <div style="display:flex; flex-direction:row;" >
 <ul id="ws" style="font-family: 'Courier New',Courier,monospace;">
 </ul>
