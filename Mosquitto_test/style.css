@@ -1,3 +1,56 @@
+@font-face {
+    font-family: ArchivoBlack;
+    src: url("fonts/ArchivoBlack.otf") format("opentype");
+}
+
+.titre1 {
+    font-size: 2em;
+    text-align: center;
+    font-family: "ArchivoBlack";
+}
+
+.button {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+}
+
+.footer {
+    --border-top: 0.1px solid black;
+    width: 100%; 
+    text-align: center;
+    background-color: #2E9840;
+    color: white;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.0;
+  }
+}
+@-webkit-keyframes blink {
+  50% {
+    opacity: 0.0;
+  }
+}
+.blink {
+  animation: blink 1s step-start 0s infinite;
+  -webkit-animation: blink 1s step-start 0s infinite;
+  color : red;
+}
+
+
 input[type="checkbox"].ios8-switch {
     position: absolute;
     margin: 8px 0 0 16px;    
