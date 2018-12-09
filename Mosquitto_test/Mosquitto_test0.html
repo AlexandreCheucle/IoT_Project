@@ -27,6 +27,14 @@ var resetPositionZ = 0;
 var armed = true;
 var sendmail = 1;
 
+var seuilTemp = 27;
+var seuilHum = 60;
+
+var TempArmed;
+var HumArmed;
+var sendmailTemp = 1;
+var sendmailHum = 1;
+
 function MQTTconnect() {
 	mqtt = new Paho.MQTT.Client("broker.hivemq.com", 8000,"/mqtt","web_" + parseInt(Math.random() * 100, 10) );
 	var options = {
@@ -55,6 +63,8 @@ function onConnect() {
 	mqtt.subscribe("cheucle/PositionZ", {qos: 0});
 	mqtt.subscribe("cheucle/AlertePosition", {qos: 0});
 	mqtt.subscribe("cheucle/Sirene", {qos: 0});
+	mqtt.subscribe("cheucle/AlarmeTemp", {qos: 0});
+	mqtt.subscribe("cheucle/AlarmeHum", {qos: 0});
 	$('#topic').val("Topic")
 }
 function onConnectionLost(response) {
@@ -144,17 +154,19 @@ function dayDisplay(data) {
 		cpt_day_full = 0;
 		var chart2 = new CanvasJS.Chart("chartContainer_Fullday_display", {
 			title :{
-				text: "Dynamic Data 2"
+				text: "Données physiques sur une journée"
 			},
 			axisY1: {
 				includeZero: false,
 				maximum : 25,
-				minimum : 21
+				minimum : 21,
+				title : "Temperature (°C)"
 			}, 
 			axisY2: {
 				includeZero: false,
 				maximum : 100,
-				minimum : 10
+				minimum : 10,
+				title : "Humidité (%)"
 			}, 
 			axisX: {
 				 valueFormatString: "HH:mm:ss" ,
@@ -167,7 +179,9 @@ function dayDisplay(data) {
 				{
 				type: "line",
 				axisYType: "secondary",
-				dataPoints: dps_hum_fullday
+				dataPoints: dps_hum_fullday,
+				lineColor : "green",
+				color : "green",
 			}]
 		});
 		chart2.render();
@@ -183,14 +197,24 @@ function dayDisplay(data) {
 
 
 function instantTempDisplay(payload) {
+
+	if ( (parseFloat(payload) > seuilTemp) && TempArmed) {
+		message = new Paho.MQTT.Message("ON");
+		message.destinationName = "cheucle/AlarmeTemp";
+	    mqtt.send(message);
+
+	}
+
 	var chart1 = new CanvasJS.Chart("chartContainer_Inst_temp", {
 		title :{
-			text: "Dynamic Data 1"
+			text: "Température en temps réel"
 		},
 		axisY: {
 			includeZero: false,
-			maximum : 25,
-			minimum : 15
+			maximum : 30,
+			minimum : 15,
+			title : "Temperature (°C)"
+
 		}, 
 		axisX: {
 			 valueFormatString: "HH:mm:ss" ,
@@ -233,20 +257,31 @@ updateChart1(dataLength);
 };
 
 function instantHumDisplay(payload) {
+	if ( (parseFloat(payload) > seuilHum) && HumArmed) {
+		if (sendmailTemp) {
+			message = new Paho.MQTT.Message("ON");
+			message.destinationName = "cheucle/AlarmeHum";
+		    mqtt.send(message);
+		    sendmailTemp = 0;
+		}
+	}
 	let chart1 = new CanvasJS.Chart("chartContainer_Inst_hum", {
 		title :{
-			text: "Instant Hum Display"
+			text: "Humidité en temps réel"
 		},
 		axisY: {
 			includeZero: false,
 			maximum : 100,
-			minimum : 15
+			minimum : 15,
+			title : "humidité (%)"
 		}, 
 		axisX: {
 			 valueFormatString: "HH:mm:ss" ,
 			labelAngle: -45
 		},     
 		data: [{
+			lineColor : "green",
+			color : "green",
 			type: "line",
 			dataPoints: dps_hum_inst
 		}]
@@ -393,6 +428,23 @@ function armementAlerte() {
 	    }
 };
 
+function armementTemp() {
+		TempArmed = !TempArmed;
+		if (TempArmed) {
+			sendmailTemp = 1;		
+		}
+		
+};
+
+function armementHum() {
+	HumArmed = !HumArmed;
+		console.log(TempArmed);
+		if (HumArmed) {
+			sendmailHum = 1;		
+		}
+		
+};
+
 
 
 $(document).ready(function() {
@@ -403,26 +455,30 @@ $(document).ready(function() {
 </head>
 
 <body style="direction: ltr;">
-<h1>Mosquitto Websockets</h1>
+<h1>Surveillance tableau</h1>
 <div>
-<div>Subscribed to <input id="topic" disabled="disabled" type="text" /> Status: <input id="status" size="80" disabled="enable" type="text" /></div>
-<div><input id="led_on" type="button" value="ON"/> <input id="led_off" type="button"  value="OFF"/></div>
-<div> 
-	<input id="dateToDisplay" type="date" name="dateToDisplay">  <button onclick="chooseDate()">Click me</button>
- </div>
- <div>
- 	<input type='checkbox' class='ios8-switch ios8-switch-lg' id='checkbox-3' checked="yes" onclick="armementAlerte()">
-	<label for='checkbox-3'>Alarme armée</label>
-	<br>			
-</div>
-<div style="display:flex; flex-direction:row;" >
-<ul id="ws" style="font-family: 'Courier New',Courier,monospace;">
-</ul>
+	<!--<div>Subscribed to <input id="topic" disabled="disabled" type="text" /> Status: <input id="status" size="80" disabled="enable" type="text" /></div>-->
+	<div> 
+		<input id="dateToDisplay" type="date" name="dateToDisplay">  <button onclick="chooseDate()">Click me</button>
+	 </div>
+	 <div>
+	 	<input type='checkbox' class='ios8-switch ios8-switch-lg' id='checkbox-3' checked="yes" onclick="armementAlerte()">
+		<label for='checkbox-3'>Alarme armée</label>
 
-<div id="chartContainer_Inst_temp" style="height: 370px; width:100%;"></div>
-<div id="chartContainer_Inst_hum" style="height: 370px; width:100%;"></div>
+		<input type='checkbox' class='ios8-switch ios8-switch' id='checkbox-2' checked="yes" onclick="armementTemp()">
+		<label for='checkbox-2'>Alarme seuil température</label>	
 
-<div id="chartContainer_Fullday_display" style="height: 370px; width:100%;"></div>
-</div>
+		<input type='checkbox' class='ios8-switch ios8-switch' id='checkbox-1'checked="yes" onclick="armementHum()">
+		<label for='checkbox-1'>Alarme seuil humidité</label>	
+	</div>
+	<div style="display:flex; flex-direction:row; justify-content: space-evenly;" >
+
+		<div id="chartContainer_Inst_temp" style="height: 370px; width:35%;"></div>
+		<div id="chartContainer_Inst_hum" style="height: 370px; width:35%;"></div>
+
+	</div>
+	<div style="display:flex; flex-direction:row; justify-content: center;" >
+		<div id="chartContainer_Fullday_display" style="height: 370px; width:75%;"></div>
+	</div>
 </div>
 </body></html>
