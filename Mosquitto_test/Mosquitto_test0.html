@@ -424,11 +424,17 @@ function alertePosition(){
 	        	mqtt.send(message);
 	        	sendmail = 0;
 			}
+			document.getElementById("posText").className += " blink";
 			message = new Paho.MQTT.Message("ON");
 			message.destinationName = "cheucle/Sirene";
 	        mqtt.send(message);
 			
 	    }
+	    else { // find on https://stackoverflow.com/questions/195951/change-an-elements-class-with-javascript
+			document.getElementById("posText").className =document.getElementById("posText").className.replace
+		      ( /(?:^|\s)blink(?!\S)/g , '' );
+		}
+
 }; 
 
 function armementAlerte() {
