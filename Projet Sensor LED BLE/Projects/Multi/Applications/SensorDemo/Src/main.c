@@ -220,8 +220,12 @@ int main(void)
   }
 
   PRINTF("SERVER: BLE Stack Initialized\n");
-
-
+	
+	ret = Add_Acc_Service();
+	if(ret == BLE_STATUS_SUCCESS)
+	PRINTF("Acc service added successfully.\n");
+	else PRINTF("Error while adding Acc service.\n");
+	
   ret = Add_Environmental_Sensor_Service();
 
   if(ret == BLE_STATUS_SUCCESS)

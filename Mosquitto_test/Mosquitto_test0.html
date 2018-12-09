@@ -12,6 +12,18 @@ var dps_hum_inst=[];
 var cpt_day_full =0;
 var dps_temp_fullday = [];
 var dps_hum_fullday = [];
+
+var tolerance = 10;
+
+var X = null;
+var Y = null;
+var Z = null;
+
+var resetPositionX = 0;
+var resetPositionY = 0;
+var resetPositionZ = 0;
+
+
 function MQTTconnect() {
 	mqtt = new Paho.MQTT.Client("broker.hivemq.com", 8000,"/mqtt","web_" + parseInt(Math.random() * 100, 10) );
 	var options = {
@@ -35,6 +47,9 @@ function onConnect() {
 	mqtt.subscribe("cheucle/Hum", {qos: 0});
 	mqtt.subscribe("cheucle/Aff", {qos: 0});
 	mqtt.subscribe("cheucle/Date", {qos: 0});
+	mqtt.subscribe("cheucle/PositionX", {qos: 0});
+	mqtt.subscribe("cheucle/PositionY", {qos: 0});
+	mqtt.subscribe("cheucle/PositionZ", {qos: 0});
 	$('#topic').val("Topic")
 }
 function onConnectionLost(response) {
@@ -47,7 +62,7 @@ function onMessageArrived(message) {
 	
 
 	if (topic=="cheucle/Aff"){
-		console.log("Aff");
+		//console.log("Aff");
 		dayDisplay(JSON.parse(payload));
 		//$('#ws').prepend('<li>' + topic + ' = ' + payload + '</li>');
 
@@ -55,14 +70,27 @@ function onMessageArrived(message) {
 	}
 
 	if (topic=="cheucle/Temp"){
-		console.log("Temp");
+		//console.log("Temp");
 		//$('#ws').prepend('<li>' + topic + ' = ' + payload + '</li>');
 		instantTempDisplay(payload);
 	}
 	if (topic=="cheucle/Hum"){
-		console.log("Hum");
+		//console.log("Hum");
 		//$('#ws').prepend('<li>' + topic + ' = ' + payload + '</li>');
 		instantHumDisplay(payload);
+	}
+
+	if (topic == "cheucle/PositionX"){
+		console.log("Position X acquired");
+		positionCheckX(payload);
+	}
+	if (topic == "cheucle/PositionY"){
+		console.log("Position Y acquired");
+		positionCheckY(payload);
+	}
+	if (topic == "cheucle/PositionZ"){
+		console.log("Position Z acquired");
+		positionCheckZ(payload);
 	}
 	
 	
@@ -107,8 +135,8 @@ function dayDisplay(data) {
 		
 	});
 
-	console.log(dps_temp_fullday);
-	console.log(dps_hum_fullday);
+	//console.log(dps_temp_fullday);
+	//console.log(dps_hum_fullday);
 
 	if (cpt_day_full == 1) {
 		cpt_day_full = 0;
@@ -277,6 +305,57 @@ function chooseDate() {
 	message = new Paho.MQTT.Message(dateToDisplay.toString());
 		message.destinationName = "cheucle/Date";
         mqtt.send(message);
+
+};
+
+function positionCheckX(payload) {
+	let dataX = payload;
+	console.log(dataX);
+	if (X == null || resetPositionX == 1) {
+		X = dataX;
+		resetPositionX = 0;
+
+	}
+	else {
+		if ((dataX < X - tolerance) || (dataX  > X + tolerance)) {
+
+			console.log("Alerte");
+		}
+	}
+
+};
+
+function positionCheckY(payload) {
+	let dataY = payload;
+	console.log(dataY);
+	if (Y == null || resetPositionY == 1) {
+		Y = dataY;
+		resetPositionY = 0;
+
+	}
+	else {
+		if ((dataY < Y - tolerance) || (dataY  > Y + tolerance)) {
+
+			console.log("Alerte");
+		}
+	}
+
+};
+
+function positionCheckZ(payload) {
+	let dataZ = payload;
+	console.log(dataZ);
+	if (Z == null || resetPositionZ == 1) {
+		Z = dataZ;
+		resetPositionZ = 0;
+
+	}
+	else {
+		if ((dataZ < Z - tolerance) || (dataZ  > Z + tolerance)) {
+
+			console.log("Alerte");
+		}
+	}
 
 };
 

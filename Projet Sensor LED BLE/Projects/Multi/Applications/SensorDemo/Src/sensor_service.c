@@ -65,11 +65,14 @@ volatile uint8_t notification_enabled = FALSE;
 uint16_t accServHandle, accCharHandle;
 uint16_t envSensServHandle, tempCharHandle, pressCharHandle, humidityCharHandle;
 
+IKS01A2_MOTION_SENSOR_Axes_t acceleration;
+
 void *TEMPERATURE_handle = NULL;
 void *HUMIDITY_handle = NULL;
 
 static void Temperature_Sensor_Handler(int16_t *pTemperature);
 static void Humidity_Sensor_Handler(int16_t *pHumidity);
+static void Accelero_Sensor_Handler(uint32_t Instance);
 
 
 uint16_t ledServHandle, ledCharHandle;
@@ -102,6 +105,9 @@ do {\
 #define COPY_LED_SERVICE_UUID(uuid_struct)  COPY_UUID_128(uuid_struct,0x0b,0x36,0x6e,0x80, 0xcf,0x3a, 0x11,0xe1, 0x9a,0xb4, 0x00,0x02,0xa5,0xd5,0xc5,0x1b)
 #define COPY_LED_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x0c,0x36,0x6e,0x80, 0xcf,0x3a, 0x11,0xe1, 0x9a,0xb4, 0x00,0x02,0xa5,0xd5,0xc5,0x1b)
 
+// Accelero UUID's
+#define COPY_ACC_SERVICE_UUID(uuid_struct) COPY_UUID_128(uuid_struct,0x01,0x36,0x6e,0x80,0xcf,0x3a, 0x11,0xe1, 0x9a,0xb4, 0x00,0x02,0xa5,0xd5,0xc5,0x1b)
+#define COPY_ACC_UUID(uuid_struct) COPY_UUID_128(uuid_struct,0x03,0x36,0x6e,0x80, 0xcf,0x3a,0x11,0xe1, 0x9a,0xb4, 0x00,0x02,0xa5,0xd5,0xc5,0x1b)
 
 /* Store Value into a buffer in Little Endian Format */
 #define STORE_LE_16(buf, val)    ( ((buf)[0] =  (uint8_t) (val)    ) , \
@@ -122,6 +128,7 @@ do {\
     /* Force to use HTS221 */
     BSP_TEMPERATURE_Init( HTS221_T_0, &TEMPERATURE_handle );
 		BSP_HUMIDITY_Init( HTS221_H_0, &HUMIDITY_handle );
+		IKS01A2_MOTION_SENSOR_Init(IKS01A2_LSM6DSL_0, MOTION_ACCELERO | MOTION_GYRO);
 
   }
 
@@ -134,6 +141,7 @@ do {\
   {
     BSP_TEMPERATURE_Sensor_Enable( TEMPERATURE_handle );
 		BSP_HUMIDITY_Sensor_Enable( HUMIDITY_handle );
+		IKS01A2_MOTION_SENSOR_Enable(0, MOTION_ACCELERO );
 		
   }
 
@@ -207,6 +215,32 @@ fail:
   return BLE_STATUS_ERROR ; 
 }
 
+/**
+* @brief Add an accelerometer service using a vendor specific profile.
+*
+* @param None
+* @retval tBleStatus Status
+*/
+tBleStatus Add_Acc_Service(void)
+{
+	tBleStatus ret;
+	uint8_t uuid[16];
+	COPY_ACC_SERVICE_UUID(uuid);
+	ret = aci_gatt_add_serv(UUID_TYPE_128, uuid, PRIMARY_SERVICE, 7, &accServHandle);
+	if (ret != BLE_STATUS_SUCCESS) goto fail;
+	COPY_ACC_UUID(uuid);
+	ret = aci_gatt_add_char(accServHandle, UUID_TYPE_128, uuid, 6,
+	CHAR_PROP_READ,
+	ATTR_PERMISSION_NONE,
+	GATT_NOTIFY_READ_REQ_AND_WAIT_FOR_APPL_RESP,
+	16, 0, &accCharHandle);
+	if (ret != BLE_STATUS_SUCCESS) goto fail;
+	PRINTF("Service ACC added. Handle 0x%04X, Free fall Charac handle: 0x%04X, Acc Charac handle:0x%04X\n",accServHandle, freeFallCharHandle, accCharHandle);
+	return BLE_STATUS_SUCCESS;
+	fail:
+	PRINTF("Error while adding ACC service.\n");
+	return BLE_STATUS_ERROR ;
+}
 
 /*
  * @brief  Add LED service using a vendor specific profile.
@@ -291,6 +325,27 @@ tBleStatus Hum_Update(int16_t humidity)
   return BLE_STATUS_SUCCESS;
 }
 
+/*
+* @brief Update acceleration characteristic value.
+* @param Structure containing acceleration value in mg
+* @retval Status
+*/
+tBleStatus Acc_Update(IKS01A2_MOTION_SENSOR_Axes_t accel) {
+	tBleStatus ret;
+	uint8_t buff[6];
+	STORE_LE_16(buff,acceleration.x);
+	STORE_LE_16(buff+2,acceleration.y);
+	STORE_LE_16(buff+4,acceleration.z);
+	ret = aci_gatt_update_char_value(accServHandle, accCharHandle, 0, 6, buff);
+	
+	if (ret != BLE_STATUS_SUCCESS){
+		PRINTF("Error while updating ACC characteristic.\n") ;
+		return BLE_STATUS_ERROR ;
+	}
+	return BLE_STATUS_SUCCESS;
+}
+
+
 
 /**
  * @brief  Puts the device in connectable mode.
@@ -368,6 +423,10 @@ void GAP_DisconnectionComplete_CB(void)
  */
 void Read_Request_CB(uint16_t handle)
 {   
+	if(handle == accCharHandle + 1){
+		Accelero_Sensor_Handler(0);
+		Acc_Update(acceleration);
+	} 
 	if(handle == tempCharHandle + 1){
     int16_t data = 0;
     Temperature_Sensor_Handler(&data);
@@ -518,22 +577,17 @@ static void Humidity_Sensor_Handler(int16_t *pHumidity)
   }
 } 
 
-
-
 /**
- * @}
- */
- 
-/**
- * @}
- */
+* @brief Handles the accelerometer axes data getting/sending
+* @param Instance the device instance
+* @retval None
+*/
+static void Accelero_Sensor_Handler(uint32_t Instance)
+{
+	IKS01A2_MOTION_SENSOR_GetAxes(Instance, MOTION_ACCELERO, &acceleration);
+}
 
-/**
- * @}
- */
 
- /**
- * @}
- */
+
  
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
