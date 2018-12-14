@@ -16,7 +16,7 @@ var cpt_day_full =0;
 var dps_temp_fullday = [];
 var dps_hum_fullday = [];
 
-var tolerance = 10;
+var tolerance = 100;
 
 var X = null;
 var Y = null;
@@ -30,7 +30,7 @@ var armed = true;
 var sendmail = 1;
 
 var seuilTemp = 22;
-var seuilHum = 60;
+var seuilHum = 40;
 
 var TempArmed = 1;
 var HumArmed = 1;
@@ -432,7 +432,7 @@ function alertePosition(){
 	    }
 	    else { // find on https://stackoverflow.com/questions/195951/change-an-elements-class-with-javascript
 			document.getElementById("posText").className =document.getElementById("posText").className.replace
-		      ( /(?:^|\s)blink(?!\S)/g , '' );
+      ( /(?:^|\s)blink(?!\S)/g , '' );
 		}
 
 }; 
@@ -450,6 +450,7 @@ function armementAlerte() {
 			message = new Paho.MQTT.Message("OFF");
 			message.destinationName = "cheucle/Sirene";
 	        mqtt.send(message);
+	        document.getElementById("posText").className =document.getElementById("posText").className.replace( /(?:^|\s)blink(?!\S)/g , '' );
 	    }
 };
 
@@ -458,6 +459,7 @@ function armementTemp() {
 		if (TempArmed) {
 			sendmailTemp = 1;		
 		}
+		
 		
 };
 

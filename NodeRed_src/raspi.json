@@ -1,1 +1,516 @@
-[{"id":"c6e9560d.0c8e1","type":"debug","z":"a6b83437.8120f","name":"AlarmeTemp","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","x":970,"y":720,"wires":[]}]
+[
+    {
+        "id": "e85c6fb.9d0aa1",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "a6b83437.8120f",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "a1c60845.6e1908",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "Mosquitto",
+        "broker": "broker.hivemq.com",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": true,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    },
+    {
+        "id": "2db3f580.8d3dea",
+        "type": "BLE",
+        "z": "a6b83437.8120f",
+        "name": "BLE",
+        "topic": "BLE",
+        "uuid": "0280e10034a6",
+        "temperature": true,
+        "humidity": true,
+        "accelerometer": true,
+        "x": 350,
+        "y": 220,
+        "wires": [
+            [
+                "ec5ed510.13e948",
+                "b8934f53.77e878",
+                "a6009835.826f4",
+                "67033c85.020154",
+                "baecaed4.920dc",
+                "a8b98a49.6e65f"
+            ]
+        ]
+    },
+    {
+        "id": "a6009835.826f4",
+        "type": "function",
+        "z": "a6b83437.8120f",
+        "name": "Temp",
+        "func": "if (msg.payload.temperature != undefined) {\n    var t = { payload : msg.payload.temperature }\n    return t;\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 570,
+        "y": 100,
+        "wires": [
+            [
+                "644fa625.b12958",
+                "9e4fb8d4.597608"
+            ]
+        ]
+    },
+    {
+        "id": "b8934f53.77e878",
+        "type": "function",
+        "z": "a6b83437.8120f",
+        "name": "Humidity",
+        "func": "if (msg.payload.humidity != undefined) {\n    var t = { payload : msg.payload.humidity }\n    return t;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 580,
+        "y": 240,
+        "wires": [
+            [
+                "16bdc816.54a08",
+                "7aee2cf3.6272e4"
+            ]
+        ]
+    },
+    {
+        "id": "644fa625.b12958",
+        "type": "debug",
+        "z": "a6b83437.8120f",
+        "name": "Temp",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 710,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "16bdc816.54a08",
+        "type": "debug",
+        "z": "a6b83437.8120f",
+        "name": "Humidity",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 740,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "9e4fb8d4.597608",
+        "type": "mqtt out",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "topic": "cheucle/Temp",
+        "qos": "",
+        "retain": "",
+        "broker": "a1c60845.6e1908",
+        "x": 740,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "7aee2cf3.6272e4",
+        "type": "mqtt out",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "topic": "cheucle/Hum",
+        "qos": "",
+        "retain": "",
+        "broker": "a1c60845.6e1908",
+        "x": 750,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "ec5ed510.13e948",
+        "type": "debug",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 370,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "67033c85.020154",
+        "type": "function",
+        "z": "a6b83437.8120f",
+        "name": "Position X",
+        "func": "if (msg.payload.x !== undefined) {\n    var t = { payload : msg.payload.x }\n    return t;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 580,
+        "y": 360,
+        "wires": [
+            [
+                "4f1b554a.34be4c",
+                "e395a30f.dbf7f"
+            ]
+        ]
+    },
+    {
+        "id": "a8b98a49.6e65f",
+        "type": "function",
+        "z": "a6b83437.8120f",
+        "name": "Position Z",
+        "func": "if (msg.payload.z !== undefined) {\n    var t = { payload : msg.payload.z }\n    return t;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 580,
+        "y": 560,
+        "wires": [
+            [
+                "26215cbc.98d2d4",
+                "6744305e.6f4"
+            ]
+        ]
+    },
+    {
+        "id": "baecaed4.920dc",
+        "type": "function",
+        "z": "a6b83437.8120f",
+        "name": "Position Y",
+        "func": "if (msg.payload.y !== undefined) {\n    var t = { payload : msg.payload.y }\n    return t;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 580,
+        "y": 460,
+        "wires": [
+            [
+                "4645d654.29ed78",
+                "7ed0afac.073eb8"
+            ]
+        ]
+    },
+    {
+        "id": "4f1b554a.34be4c",
+        "type": "debug",
+        "z": "a6b83437.8120f",
+        "name": "Position X",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 780,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "4645d654.29ed78",
+        "type": "debug",
+        "z": "a6b83437.8120f",
+        "name": "Position Y",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 780,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "26215cbc.98d2d4",
+        "type": "debug",
+        "z": "a6b83437.8120f",
+        "name": "Position Z",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 780,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "e395a30f.dbf7f",
+        "type": "mqtt out",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "topic": "cheucle/PositionX",
+        "qos": "",
+        "retain": "",
+        "broker": "a1c60845.6e1908",
+        "x": 810,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "7ed0afac.073eb8",
+        "type": "mqtt out",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "topic": "cheucle/PositionY",
+        "qos": "",
+        "retain": "",
+        "broker": "a1c60845.6e1908",
+        "x": 810,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "6744305e.6f4",
+        "type": "mqtt out",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "topic": "cheucle/PositionZ",
+        "qos": "",
+        "retain": "",
+        "broker": "a1c60845.6e1908",
+        "x": 810,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "f3703957.8576c8",
+        "type": "mqtt in",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "topic": "cheucle/AlertePosition",
+        "qos": "2",
+        "broker": "a1c60845.6e1908",
+        "x": 250,
+        "y": 780,
+        "wires": [
+            [
+                "6a7985c9.941d44",
+                "1364f287.89c15d"
+            ]
+        ]
+    },
+    {
+        "id": "1364f287.89c15d",
+        "type": "http request",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "method": "GET",
+        "ret": "txt",
+        "url": "https://maker.ifttt.com/trigger/alertePos/with/key/cier4pyFVXzjKe51v6d2MDLEuvhib8Fj2J4AHfSlDvh",
+        "tls": "",
+        "x": 470,
+        "y": 780,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6a7985c9.941d44",
+        "type": "debug",
+        "z": "a6b83437.8120f",
+        "name": "AlertePosition",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 470,
+        "y": 720,
+        "wires": []
+    },
+    {
+        "id": "83288aab.6ffb1",
+        "type": "mqtt in",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "topic": "cheucle/Sirene",
+        "qos": "2",
+        "broker": "a1c60845.6e1908",
+        "x": 200,
+        "y": 980,
+        "wires": [
+            [
+                "db8b68af.2a6cf8",
+                "ff732d28.db5878"
+            ]
+        ]
+    },
+    {
+        "id": "db8b68af.2a6cf8",
+        "type": "debug",
+        "z": "a6b83437.8120f",
+        "name": "Sirene",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 390,
+        "y": 1020,
+        "wires": []
+    },
+    {
+        "id": "ff732d28.db5878",
+        "type": "change",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "rules": [
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "ON",
+                "fromt": "str",
+                "to": "1",
+                "tot": "str"
+            },
+            {
+                "t": "change",
+                "p": "payload",
+                "pt": "msg",
+                "from": "OFF",
+                "fromt": "str",
+                "to": "0",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 420,
+        "y": 980,
+        "wires": [
+            [
+                "f1653285.7bbbc8"
+            ]
+        ]
+    },
+    {
+        "id": "f1653285.7bbbc8",
+        "type": "rpi-gpio out",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "pin": "13",
+        "set": "",
+        "level": "0",
+        "freq": "",
+        "out": "out",
+        "x": 620,
+        "y": 980,
+        "wires": []
+    },
+    {
+        "id": "c23c74d9.5088b",
+        "type": "mqtt in",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "topic": "cheucle/AlarmeTemp",
+        "qos": "2",
+        "broker": "a1c60845.6e1908",
+        "x": 760,
+        "y": 780,
+        "wires": [
+            [
+                "c6e9560d.0c8e1",
+                "26105745.a97ec"
+            ]
+        ]
+    },
+    {
+        "id": "26105745.a97ec",
+        "type": "http request",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "method": "GET",
+        "ret": "txt",
+        "url": "https://maker.ifttt.com/trigger/alerteTemp/with/key/cier4pyFVXzjKe51v6d2MDLEuvhib8Fj2J4AHfSlDvh",
+        "tls": "",
+        "x": 980,
+        "y": 780,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c6e9560d.0c8e1",
+        "type": "debug",
+        "z": "a6b83437.8120f",
+        "name": "AlarmeTemp",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 970,
+        "y": 720,
+        "wires": []
+    },
+    {
+        "id": "f289064e.b59a8",
+        "type": "mqtt in",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "topic": "cheucle/AlarmeHum",
+        "qos": "2",
+        "broker": "a1c60845.6e1908",
+        "x": 1230,
+        "y": 780,
+        "wires": [
+            [
+                "b147d78f.a15d7",
+                "fb44d424.dff43"
+            ]
+        ]
+    },
+    {
+        "id": "fb44d424.dff43",
+        "type": "http request",
+        "z": "a6b83437.8120f",
+        "name": "",
+        "method": "GET",
+        "ret": "txt",
+        "url": "https://maker.ifttt.com/trigger/alerteHum/with/key/cier4pyFVXzjKe51v6d2MDLEuvhib8Fj2J4AHfSlDvh",
+        "tls": "",
+        "x": 1460,
+        "y": 780,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b147d78f.a15d7",
+        "type": "debug",
+        "z": "a6b83437.8120f",
+        "name": "AlarmeHul",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 1450,
+        "y": 720,
+        "wires": []
+    }
+]
